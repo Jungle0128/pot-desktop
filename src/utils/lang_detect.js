@@ -111,6 +111,7 @@ async function google_detect(text) {
         km: 'km',
         fa: 'fa',
         no: 'nb_no',
+        fi: 'fi',
         uk: 'uk'
     };
     let res = await fetch(
@@ -168,6 +169,7 @@ async function niutrans_detect(text) {
         nb: 'nb_no',
         nn: 'nn_no',
         fa: 'fa',
+        fi: 'fi',
         uk: 'uk'
     };
     let res = await fetch('https://test.niutrans.com/NiuTransServer/language', {
@@ -209,6 +211,7 @@ async function yandex_detect(text) {
         hi: 'hi',
         no: 'nb_no',
         fa: 'fa',
+        fi: 'fi',
         uk: 'uk'
     };
 
@@ -255,6 +258,7 @@ async function bing_detect(text) {
         km: 'km',
         nb: 'nb_no',
         fa: 'fa',
+        fi: 'fi',
         uk: 'uk'
     };
     const token_url = 'https://edge.microsoft.com/translate/auth';

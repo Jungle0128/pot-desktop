@@ -29,6 +29,7 @@ export const languageList = [
     'sv',
     'pl',
     'nl',
+    'fi',
     'uk',
     'he',
 ];
@@ -63,6 +64,7 @@ export enum LanguageFlag {
     sv = 'se',
     pl = 'pl',
     nl = 'nl',
+    fi = 'fi',
     uk = 'ua',
     he = 'il',
 }

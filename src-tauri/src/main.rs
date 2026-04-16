@@ -41,9 +41,14 @@ pub static APP: OnceCell<tauri::AppHandle> = OnceCell::new();
 // Text to be translated
 pub struct StringWrapper(pub Mutex<String>);
 
-fn main() {
-    tauri::Builder::default()
-        .plugin(tauri_plugin_single_instance::init(|app, _, cwd| {
+fn with_single_instance<R: tauri::Runtime>(builder: tauri::Builder<R>) -> tauri::Builder<R> {
+    #[cfg(target_os = "windows")]
+    {
+        builder
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        builder.plugin(tauri_plugin_single_instance::init(|app, _, cwd| {
             Notification::new(&app.config().tauri.bundle.identifier)
                 .title("The program is already running. Please do not start it again!")
                 .body(cwd)
@@ -51,6 +56,11 @@ fn main() {
                 .show()
                 .unwrap();
         }))
+    }
+}
+
+fn main() {
+    with_single_instance(tauri::Builder::default())
         .plugin(
             tauri_plugin_log::Builder::default()
                 .targets([LogTarget::LogDir, LogTarget::Stdout])
