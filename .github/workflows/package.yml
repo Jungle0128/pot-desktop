@@ -207,6 +207,31 @@ jobs:
               run: pnpm install
             - name: Code Format
               run: pnpm prettier --write .
+            - name: Import Windows Certificate
+              if: matrix.platform == 'windows-latest' && secrets.WINDOWS_CERTIFICATE != '' && secrets.WINDOWS_CERTIFICATE_PASSWORD != ''
+              env:
+                  WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+                  WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+                  WINDOWS_TIMESTAMP_URL: ${{ secrets.WINDOWS_TIMESTAMP_URL }}
+              run: |
+                  New-Item -ItemType Directory -Force -Path certificate | Out-Null
+                  Set-Content -Path certificate/tempCert.txt -Value $env:WINDOWS_CERTIFICATE
+                  certutil -decode certificate/tempCert.txt certificate/certificate.pfx | Out-Null
+                  Remove-Item certificate/tempCert.txt
+                  $importedCert = Import-PfxCertificate -FilePath certificate/certificate.pfx -CertStoreLocation Cert:\CurrentUser\My -Password (ConvertTo-SecureString -String $env:WINDOWS_CERTIFICATE_PASSWORD -Force -AsPlainText)
+                  Remove-Item certificate/certificate.pfx
+                  if (-not $importedCert.Thumbprint) { throw "Failed to read Windows certificate thumbprint." }
+                  $timestampUrl = if ($env:WINDOWS_TIMESTAMP_URL) { $env:WINDOWS_TIMESTAMP_URL } else { "http://timestamp.digicert.com" }
+                  Add-Content -Path $env:GITHUB_ENV -Value "WINDOWS_CERTIFICATE_THUMBPRINT=$($importedCert.Thumbprint)"
+                  Add-Content -Path $env:GITHUB_ENV -Value "WINDOWS_TIMESTAMP_URL=$timestampUrl"
+            - name: Prepare Windows Signing Config
+              if: matrix.platform == 'windows-latest' && secrets.WINDOWS_CERTIFICATE != '' && secrets.WINDOWS_CERTIFICATE_PASSWORD != ''
+              run: |
+                  $windowsConfigPath = "src-tauri/tauri.windows.conf.json"
+                  $windowsConfig = Get-Content $windowsConfigPath -Raw | ConvertFrom-Json
+                  $windowsConfig.tauri.bundle.windows.certificateThumbprint = $env:WINDOWS_CERTIFICATE_THUMBPRINT
+                  $windowsConfig.tauri.bundle.windows.timestampUrl = $env:WINDOWS_TIMESTAMP_URL
+                  $windowsConfig | ConvertTo-Json -Depth 100 | Set-Content $windowsConfigPath -Encoding utf8
             - name: Build and Package
               run: |
                   $env:TAURI_PRIVATE_KEY="${{ secrets.TAURI_PRIVATE_KEY }}"
@@ -275,6 +300,31 @@ jobs:
                   Expand .\Microsoft.WebView2.FixedVersionRuntime.109.0.1518.78.${{ matrix.arch }}.cab -F:* ./src-tauri
                   Remove-Item .\src-tauri\tauri.windows.conf.json
                   Rename-Item .\src-tauri\webview.${{ matrix.arch }}.json tauri.windows.conf.json
+            - name: Import Windows Certificate
+              if: matrix.platform == 'windows-latest' && secrets.WINDOWS_CERTIFICATE != '' && secrets.WINDOWS_CERTIFICATE_PASSWORD != ''
+              env:
+                  WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+                  WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+                  WINDOWS_TIMESTAMP_URL: ${{ secrets.WINDOWS_TIMESTAMP_URL }}
+              run: |
+                  New-Item -ItemType Directory -Force -Path certificate | Out-Null
+                  Set-Content -Path certificate/tempCert.txt -Value $env:WINDOWS_CERTIFICATE
+                  certutil -decode certificate/tempCert.txt certificate/certificate.pfx | Out-Null
+                  Remove-Item certificate/tempCert.txt
+                  $importedCert = Import-PfxCertificate -FilePath certificate/certificate.pfx -CertStoreLocation Cert:\CurrentUser\My -Password (ConvertTo-SecureString -String $env:WINDOWS_CERTIFICATE_PASSWORD -Force -AsPlainText)
+                  Remove-Item certificate/certificate.pfx
+                  if (-not $importedCert.Thumbprint) { throw "Failed to read Windows certificate thumbprint." }
+                  $timestampUrl = if ($env:WINDOWS_TIMESTAMP_URL) { $env:WINDOWS_TIMESTAMP_URL } else { "http://timestamp.digicert.com" }
+                  Add-Content -Path $env:GITHUB_ENV -Value "WINDOWS_CERTIFICATE_THUMBPRINT=$($importedCert.Thumbprint)"
+                  Add-Content -Path $env:GITHUB_ENV -Value "WINDOWS_TIMESTAMP_URL=$timestampUrl"
+            - name: Prepare Windows Signing Config
+              if: matrix.platform == 'windows-latest' && secrets.WINDOWS_CERTIFICATE != '' && secrets.WINDOWS_CERTIFICATE_PASSWORD != ''
+              run: |
+                  $windowsConfigPath = "src-tauri/tauri.windows.conf.json"
+                  $windowsConfig = Get-Content $windowsConfigPath -Raw | ConvertFrom-Json
+                  $windowsConfig.tauri.bundle.windows.certificateThumbprint = $env:WINDOWS_CERTIFICATE_THUMBPRINT
+                  $windowsConfig.tauri.bundle.windows.timestampUrl = $env:WINDOWS_TIMESTAMP_URL
+                  $windowsConfig | ConvertTo-Json -Depth 100 | Set-Content $windowsConfigPath -Encoding utf8
             - name: Build and Package
               run: |
                   $env:TAURI_PRIVATE_KEY="${{ secrets.TAURI_PRIVATE_KEY }}"
