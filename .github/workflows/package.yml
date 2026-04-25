@@ -94,6 +94,10 @@ jobs:
                 target: [aarch64-apple-darwin, x86_64-apple-darwin]
 
         runs-on: ${{ matrix.platform }}
+        env:
+            WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+            WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+            WINDOWS_TIMESTAMP_URL: ${{ secrets.WINDOWS_TIMESTAMP_URL }}
         steps:
             - uses: actions/download-artifact@v4
               with:
@@ -208,11 +212,7 @@ jobs:
             - name: Code Format
               run: pnpm prettier --write .
             - name: Import Windows Certificate
-              if: matrix.platform == 'windows-latest' && secrets.WINDOWS_CERTIFICATE != '' && secrets.WINDOWS_CERTIFICATE_PASSWORD != ''
-              env:
-                  WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
-                  WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
-                  WINDOWS_TIMESTAMP_URL: ${{ secrets.WINDOWS_TIMESTAMP_URL }}
+              if: matrix.platform == 'windows-latest' && env.WINDOWS_CERTIFICATE != '' && env.WINDOWS_CERTIFICATE_PASSWORD != ''
               run: |
                   New-Item -ItemType Directory -Force -Path certificate | Out-Null
                   Set-Content -Path certificate/tempCert.txt -Value $env:WINDOWS_CERTIFICATE
@@ -225,7 +225,7 @@ jobs:
                   Add-Content -Path $env:GITHUB_ENV -Value "WINDOWS_CERTIFICATE_THUMBPRINT=$($importedCert.Thumbprint)"
                   Add-Content -Path $env:GITHUB_ENV -Value "WINDOWS_TIMESTAMP_URL=$timestampUrl"
             - name: Prepare Windows Signing Config
-              if: matrix.platform == 'windows-latest' && secrets.WINDOWS_CERTIFICATE != '' && secrets.WINDOWS_CERTIFICATE_PASSWORD != ''
+              if: matrix.platform == 'windows-latest' && env.WINDOWS_CERTIFICATE != '' && env.WINDOWS_CERTIFICATE_PASSWORD != ''
               run: |
                   $windowsConfigPath = "src-tauri/tauri.windows.conf.json"
                   $windowsConfig = Get-Content $windowsConfigPath -Raw | ConvertFrom-Json
@@ -272,6 +272,10 @@ jobs:
                       target: aarch64-pc-windows-msvc
                       toolchain: stable-aarch64-pc-windows-msvc
         runs-on: ${{ matrix.platform }}
+        env:
+            WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+            WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+            WINDOWS_TIMESTAMP_URL: ${{ secrets.WINDOWS_TIMESTAMP_URL }}
         steps:
             - uses: actions/download-artifact@v4
               with:
@@ -301,11 +305,7 @@ jobs:
                   Remove-Item .\src-tauri\tauri.windows.conf.json
                   Rename-Item .\src-tauri\webview.${{ matrix.arch }}.json tauri.windows.conf.json
             - name: Import Windows Certificate
-              if: matrix.platform == 'windows-latest' && secrets.WINDOWS_CERTIFICATE != '' && secrets.WINDOWS_CERTIFICATE_PASSWORD != ''
-              env:
-                  WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
-                  WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
-                  WINDOWS_TIMESTAMP_URL: ${{ secrets.WINDOWS_TIMESTAMP_URL }}
+              if: matrix.platform == 'windows-latest' && env.WINDOWS_CERTIFICATE != '' && env.WINDOWS_CERTIFICATE_PASSWORD != ''
               run: |
                   New-Item -ItemType Directory -Force -Path certificate | Out-Null
                   Set-Content -Path certificate/tempCert.txt -Value $env:WINDOWS_CERTIFICATE
@@ -318,7 +318,7 @@ jobs:
                   Add-Content -Path $env:GITHUB_ENV -Value "WINDOWS_CERTIFICATE_THUMBPRINT=$($importedCert.Thumbprint)"
                   Add-Content -Path $env:GITHUB_ENV -Value "WINDOWS_TIMESTAMP_URL=$timestampUrl"
             - name: Prepare Windows Signing Config
-              if: matrix.platform == 'windows-latest' && secrets.WINDOWS_CERTIFICATE != '' && secrets.WINDOWS_CERTIFICATE_PASSWORD != ''
+              if: matrix.platform == 'windows-latest' && env.WINDOWS_CERTIFICATE != '' && env.WINDOWS_CERTIFICATE_PASSWORD != ''
               run: |
                   $windowsConfigPath = "src-tauri/tauri.windows.conf.json"
                   $windowsConfig = Get-Content $windowsConfigPath -Raw | ConvertFrom-Json
