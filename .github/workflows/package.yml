@@ -2,7 +2,9 @@ name: Package
 on:
     push:
         branches: [master]
-        tags-ignore: [updater]
+        tags:
+            - '*'
+            - '!updater'
 permissions: write-all
 
 jobs:
@@ -472,6 +474,7 @@ jobs:
     trigger-docs-update:
         needs: [build-for-macos, build-for-windows, build-for-linux]
         runs-on: ubuntu-latest
+        continue-on-error: true
         if: startsWith(github.ref, 'refs/tags')
         steps:
             - name: Trigger update
@@ -529,6 +532,7 @@ jobs:
         name: Update Homebrew cask
         needs: build-for-macos
         runs-on: macos-latest
+        continue-on-error: true
         if: startsWith(github.ref, 'refs/tags')
         steps:
             - name: Checkout repository
@@ -558,6 +562,7 @@ jobs:
         name: Update WinGet Package
         needs: build-for-windows
         runs-on: ubuntu-latest
+        continue-on-error: true
         if: startsWith(github.ref, 'refs/tags')
         steps:
             - name: Checkout repository
